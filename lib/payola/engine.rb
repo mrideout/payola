@@ -18,14 +18,9 @@ module Payola
       end
     end
 
-    initializer :inject_helpers do |app|
-      ActiveSupport.on_load :action_controller do
-        ::ActionController::Base.send(:helper, Payola::PriceHelper)
-      end
-
-      ActiveSupport.on_load :action_mailer do
-        ::ActionMailer::Base.send(:helper, Payola::PriceHelper)
-      end
+    config.to_prepare do
+      ::ActionController::Base.send(:helper, Payola::PriceHelper)
+      ::ActionMailer::Base.send(:helper, Payola::PriceHelper)
     end
 
     # Configure subscription listeners after initialization to ensure classes are loaded
