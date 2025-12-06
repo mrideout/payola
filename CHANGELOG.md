@@ -80,7 +80,7 @@ All notable changes to Payola will be documented in this file.
 ### Enhancements
 - **Add `data-payola-stripe-style` attribute for customizing Stripe Elements appearance**: Forms can now customize the visual appearance of Stripe Elements (card number, expiration, CVC) by adding a `data-payola-stripe-style` attribute with a JSON object containing style properties. This allows per-form customization of properties like `fontSize`, `color`, `fontFamily`, `fontWeight`, and other [Stripe Elements base style properties](https://docs.stripe.com/js/appendix/style). Example: `data-payola-stripe-style='{"fontSize":"16px","color":"#333"}'`. This enhancement enables forms to match Stripe Elements styling to their site's design without requiring code changes to the Payola gem.
 - Add support for Ruby 3.4. Previously, only Ruby 2.6 and earlier were supported.
-- Update the `rails` gem from 5.0 to 8.0
+- Update the `rails` gem from 5.0 to 8.1. This gem should now work with apps that run Rails 5.0 or later and has been tested with apps running rails versions as late as 8.1.
 - Update the `stripe` gem from 2.8 to 13.5.1
 - Update Stripe API version from 2015-02-18 to 2020-03-02
 - **Allow canceling subscriptions in `processing` state**: Subscriptions with `stripe_status: "incomplete"` (SCA/3D Secure pending) can now be canceled. Previously, the AASM state machine only allowed the `cancel` event from `active` state, but incomplete subscriptions remain in `processing` state. This affected users who wanted to cancel a subscription during the 23-hour window before Stripe auto-expires it.
