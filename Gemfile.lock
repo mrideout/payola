@@ -2,11 +2,11 @@ PATH
   remote: .
   specs:
     payola-payments (1.5.1)
-      aasm (~> 5.5)
-      jquery-rails (~> 4.6)
+      aasm (>= 4.0)
+      jquery-rails (>= 4.0)
       rails (>= 5.0)
-      stripe (~> 13.0)
-      stripe_event (~> 2.13)
+      stripe (>= 5.0)
+      stripe_event (>= 2.0)
 
 GEM
   remote: https://rubygems.org/

@@ -17,10 +17,10 @@ Gem::Specification.new do |s|
   end
 
   s.add_dependency "rails", ">= 5.0"
-  s.add_dependency "jquery-rails", "~> 4.6"
-  s.add_dependency "stripe", "~> 13.0"
-  s.add_dependency "aasm", "~> 5.5"
-  s.add_dependency "stripe_event", "~> 2.13"
+  s.add_dependency "jquery-rails", ">= 4.0"
+  s.add_dependency "stripe", ">= 5.0"
+  s.add_dependency "aasm", ">= 4.0"
+  s.add_dependency "stripe_event", ">= 2.0"
 
   s.add_development_dependency "sqlite3", "~> 2.1"
   s.add_development_dependency "rspec-rails"
