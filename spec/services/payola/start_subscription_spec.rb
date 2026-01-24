@@ -63,7 +63,7 @@ module Payola
         StartSubscription.call(subscription)
         CancelSubscription.call(subscription)
 
-        subscription2 = create(:subscription, state: 'processing', plan: plan, owner: user)
+        subscription2 = create(:subscription, state: 'processing', plan: plan, stripe_token: nil, owner: user)
         StartSubscription.call(subscription2)
         expect(subscription2.reload.stripe_customer_id).to_not be_nil
         expect(subscription2.reload.stripe_customer_id).to eq subscription.reload.stripe_customer_id
@@ -82,6 +82,27 @@ module Payola
         stripe_customer_id = subscription2.reload.stripe_customer_id
         expect(stripe_customer_id).to eq subscription.reload.stripe_customer_id
         expect(Stripe::Customer.retrieve(stripe_customer_id).default_source).to_not be_nil
+      end
+
+      it "should update payment source when existing customer with a card provides a new token" do
+        plan = create(:subscription_plan)
+
+        # First subscription creates customer with a card
+        subscription1 = create(:subscription, state: 'processing', plan: plan, stripe_token: token, owner: user)
+        StartSubscription.call(subscription1)
+        CancelSubscription.call(subscription1)
+
+        original_source = Stripe::Customer.retrieve(subscription1.reload.stripe_customer_id).default_source
+        expect(original_source).to_not be_nil
+
+        # Second subscription with a NEW token should update the payment source
+        new_token = StripeMock.generate_card_token({})
+        subscription2 = create(:subscription, state: 'processing', plan: plan, stripe_token: new_token, owner: user)
+        StartSubscription.call(subscription2)
+
+        updated_source = Stripe::Customer.retrieve(subscription2.reload.stripe_customer_id).default_source
+        expect(updated_source).to_not be_nil
+        expect(updated_source).to_not eq original_source
       end
 
       it "should not re-use an existing customer that has been deleted" do

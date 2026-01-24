@@ -94,6 +94,7 @@ All notable changes to Payola will be documented in this file.
 
 ### Bug Fixes
 - Change `Payola.reset!` to use `StripeEvent.event_filter` rather than `event_retriever`. #335
+- Fix returning customers unable to subscribe with a new card when they already have a payment method on file
 
 ## v1.5.1 - 2017-11-25
 [Full Changelog](https://github.com/peterkeen/payola/compare/v1.5.0...v1.5.1)
