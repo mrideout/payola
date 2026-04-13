@@ -39,12 +39,12 @@ All notable changes to Payola will be documented in this file.
   **Note**: If you have completely custom payment forms that don't use Payola's standard form classes (`.payola-onestep-subscription-form`, `.payola-subscription-form`, `.payola-payment-form`), you'll need to manually mount and handle the card elements:
   ```javascript
   // Mount the Card Elements with error display
-  var cardNumber = PayolaStripe.createCardElements(
+  var elements = PayolaStripe.createCardElements(
       '#card-number', '#card-expiry', '#card-cvc', null, '#card-errors'
   );
 
   // Create token on form submit (pass the cardNumber element)
-  PayolaStripe.createToken(cardNumber, onSuccess, onError);
+  PayolaStripe.createToken(elements.cardNumber, onSuccess, onError);
   ```
 
 - **Stripe.js v2 no longer supported**: The deprecated `data-stripe` form fields (e.g., `data-stripe="number"`, `data-stripe="cvc"`) and `Stripe.card.createToken()` API are no longer supported. All forms must use Stripe Elements as described above.
@@ -78,6 +78,7 @@ All notable changes to Payola will be documented in this file.
 - **Replace `customer.subscriptions.create()` with `Stripe::Subscription.create()`**: Subscription creation now uses the top-level `Stripe::Subscription.create()` API instead of the deprecated customer-nested endpoint.
 
 ### Enhancements
+- **Add dark mode / dynamic theming support for Stripe Elements**: `createCardElements` now returns an object (`{ cardNumber, cardExpiry, cardCvc }`) instead of just the `cardNumber` element, making all three elements accessible for style updates. Forms mounted via `mountCardElements` (including all built-in form handlers) listen for a `payola:theme-change` jQuery event on `document`. Host applications can trigger this event to update Stripe Element styles at any time (e.g., on page load or when the user toggles dark mode): `document.dispatchEvent(new CustomEvent('payola:theme-change', { detail: { base: { color: '#fff' } } }))`.
 - **Add `data-payola-stripe-style` attribute for customizing Stripe Elements appearance**: Forms can now customize the visual appearance of Stripe Elements (card number, expiration, CVC) by adding a `data-payola-stripe-style` attribute with a JSON object containing style properties. This allows per-form customization of properties like `fontSize`, `color`, `fontFamily`, `fontWeight`, and other [Stripe Elements base style properties](https://docs.stripe.com/js/appendix/style). Example: `data-payola-stripe-style='{"fontSize":"16px","color":"#333"}'`. This enhancement enables forms to match Stripe Elements styling to their site's design without requiring code changes to the Payola gem.
 - Add support for Ruby 3.4. Previously, only Ruby 2.6 and earlier were supported.
 - Update the `rails` gem from 5.0 to 8.1. This gem should now work with apps that run Rails 5.0 or later and has been tested with apps running rails versions as late as 8.1.

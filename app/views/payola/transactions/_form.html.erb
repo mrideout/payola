@@ -47,13 +47,13 @@
 
     var stripe = Stripe('<%= stripe_key %>');
     window.payolaStripe = stripe;
-    var cardElement = PayolaStripe.createCardElements('#card-number', '#card-expiry', '#card-cvc', null, '#card-errors');
+    var cardElements = PayolaStripe.createCardElements('#card-number', '#card-expiry', '#card-cvc', null, '#card-errors');
 
     $('#payment-form').submit(function(event) {
       var form = $(this);
       form.find('button').prop('disabled', true);
 
-      stripe.createToken(cardElement).then(function(result) {
+      stripe.createToken(cardElements.cardNumber).then(function(result) {
         if (result.error) {
           showError(result.error.message);
         } else {

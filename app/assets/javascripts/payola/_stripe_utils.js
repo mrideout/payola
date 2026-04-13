@@ -1,5 +1,9 @@
 // Shared Stripe.js v3 utilities for Payola
 var PayolaStripe = {
+    // Registry of all cardElementsStores, used by the payola:theme-change listener
+    _elementStores: [],
+    _themeListenerBound: false,
+
     // Get the global Stripe instance
     getStripe: function() {
         if (typeof payolaStripe !== 'undefined') {
@@ -9,7 +13,8 @@ var PayolaStripe = {
     },
 
     // Create and mount separate Stripe Card Elements (cardNumber, cardExpiry, cardCvc)
-    // Returns the cardNumber element (used for tokenization), or null if Stripe is not initialized
+    // Returns an object with all three element references, or null if Stripe is not initialized.
+    // The cardNumber element is used for tokenization; all three are needed for style updates.
     // If errorElement is provided, attaches change listeners to display validation errors
     createCardElements: function(numberMount, expiryMount, cvcMount, options, errorElement) {
         var stripe = PayolaStripe.getStripe();
@@ -50,12 +55,16 @@ var PayolaStripe = {
             }
         }
 
-        return cardNumber;
+        return {
+            cardNumber: cardNumber,
+            cardExpiry: cardExpiry,
+            cardCvc: cardCvc
+        };
     },
 
     // Mount Card Elements on forms matching a selector
     // Uses separate elements: #card-number, #card-expiry, #card-cvc
-    // Returns the cardNumber element reference (Stripe uses it to find related elements during tokenization)
+    // Stores { cardNumber, cardExpiry, cardCvc } in cardElementsStore keyed by form ID
     mountCardElements: function(formSelector, cardElementsStore) {
         $(formSelector).each(function() {
             var form = $(this);
@@ -94,14 +103,41 @@ var PayolaStripe = {
                     }
                 }
 
-                var cardNumber = PayolaStripe.createCardElements(
+                var result = PayolaStripe.createCardElements(
                     numberMount, expiryMount, cvcMount, options, errorElement
                 );
-                if (cardNumber) {
-                    cardElementsStore[formId] = cardNumber;
+                if (result) {
+                    cardElementsStore[formId] = result;
                 }
             }
         });
+
+        // Register this store for payola:theme-change events
+        if (PayolaStripe._elementStores.indexOf(cardElementsStore) === -1) {
+            PayolaStripe._elementStores.push(cardElementsStore);
+        }
+
+        // Bind theme change listener once across all stores
+        // Host apps dispatch:
+        //   document.dispatchEvent(new CustomEvent('payola:theme-change', { detail: style }))
+        // where style is a Stripe Elements style object, e.g.
+        //   { base: { color: '#fff', '::placeholder': { color: '#aaa' } } }
+        if (!PayolaStripe._themeListenerBound) {
+            document.addEventListener('payola:theme-change', function(e) {
+                var style = e.detail;
+                for (var i = 0; i < PayolaStripe._elementStores.length; i++) {
+                    var store = PayolaStripe._elementStores[i];
+                    for (var formId in store) {
+                        if (!store.hasOwnProperty(formId)) continue;
+                        var els = store[formId];
+                        if (els.cardNumber) els.cardNumber.update({ style: style });
+                        if (els.cardExpiry) els.cardExpiry.update({ style: style });
+                        if (els.cardCvc) els.cardCvc.update({ style: style });
+                    }
+                }
+            });
+            PayolaStripe._themeListenerBound = true;
+        }
     },
 
     // Return a hidden input element with the CSRF authenticity token
@@ -174,8 +210,8 @@ var PayolaStripe = {
             },
 
             handleSubmit: function(form) {
-                var cardElement = handler.cardElements[form.attr('id') || 'default'];
-                if (!cardElement) {
+                var els = handler.cardElements[form.attr('id') || 'default'];
+                if (!els || !els.cardNumber) {
                     handler.showError(form, "Card input not found. Please refresh the page.");
                     return false;
                 }
@@ -183,7 +219,7 @@ var PayolaStripe = {
                 $(form).find(':submit').prop('disabled', true);
                 $('.payola-spinner').show();
 
-                PayolaStripe.createToken(cardElement,
+                PayolaStripe.createToken(els.cardNumber,
                     function(token) { config.onTokenSuccess(form, token, handler); },
                     function(error) { handler.showError(form, error); }
                 );
@@ -237,13 +273,13 @@ var PayolaCheckoutForm = {
         window.payolaStripe = stripe;
 
         var form = document.getElementById(options.formId);
-        var cardElement = PayolaStripe.createCardElements('#card-number', '#card-expiry', '#card-cvc', null, '#card-errors');
+        var cardElements = PayolaStripe.createCardElements('#card-number', '#card-expiry', '#card-cvc', null, '#card-errors');
 
         form.addEventListener('submit', function(event) {
             event.preventDefault();
             PayolaCheckoutForm.setLoading(form, true);
 
-            stripe.createToken(cardElement).then(function(result) {
+            stripe.createToken(cardElements.cardNumber).then(function(result) {
                 if (result.error) {
                     PayolaCheckoutForm.showError(form, result.error.message);
                 } else {
@@ -255,7 +291,7 @@ var PayolaCheckoutForm = {
         return {
             form: form,
             stripe: stripe,
-            cardElement: cardElement,
+            cardElements: cardElements,
             poll: function(guid, retriesLeft) {
                 PayolaCheckoutForm.poll(form, guid, retriesLeft, options);
             }
